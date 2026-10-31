@@ -1,0 +1,381 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum Condition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+}
+
+enum ItemStatus {
+  AVAILABLE
+  UNAVAILABLE
+  ARCHIVED
+  HIDDEN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+  COMPLETED
+}
+
+enum TransactionStatus {
+  AWAITING_HANDOVER
+  BORROWED
+  RETURN_REQUESTED
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED
+  REQUEST_APPROVED
+  REQUEST_DECLINED
+  REQUEST_CANCELLED
+  NEW_MESSAGE
+  HANDOVER_CONFIRMED
+  RETURN_REQUESTED
+  RETURN_CONFIRMED
+  NEW_REVIEW
+  SECURITY
+}
+
+enum ReportReason {
+  SPAM_OR_MISLEADING
+  INAPPROPRIATE_CONTENT
+  SUSPICIOUS_BEHAVIOUR
+  SAFETY_CONCERN
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+model User {
+  id              String        @id @default(uuid()) @db.Uuid
+  name            String
+  email           String        @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  profileImageUrl String?
+  bio             String?
+  city            String?
+  community       String?
+  latitude        Float?
+  longitude       Float?
+  role            Role          @default(USER)
+  accountStatus   AccountStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  sessions           Session[]
+  resetTokens        PasswordResetToken[]
+  verificationTokens EmailVerificationToken[]
+  items              Item[]
+  favorites          Favorite[]
+  requestsAsBorrower BorrowRequest[]          @relation("BorrowerRequests")
+  requestsAsOwner    BorrowRequest[]          @relation("OwnerRequests")
+  notifications      Notification[]
+  reviewsWritten     Review[]                 @relation("ReviewWriter")
+  reviewsReceived    Review[]                 @relation("ReviewSubject")
+  reportsFiled       Report[]                 @relation("ReportReporter")
+  reportsAgainst     Report[]                 @relation("ReportSubject")
+  messages           Message[]
+  conversationsA     Conversation[]           @relation("ConversationA")
+  conversationsB     Conversation[]           @relation("ConversationB")
+  notificationPref   NotificationPreference?
+  moderationActions  ModerationAction[]
+
+  @@index([accountStatus])
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// SHA-256 of the opaque cookie value. The raw value is never stored.
+  tokenHash  String   @unique
+  csrfToken  String
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Category {
+  slug      String @id
+  label     String
+  sortOrder Int    @default(0)
+  items     Item[]
+}
+
+model Item {
+  id                 String     @id @default(uuid()) @db.Uuid
+  ownerId            String     @db.Uuid
+  owner              User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  title              String
+  description        String
+  categorySlug       String
+  category           Category   @relation(fields: [categorySlug], references: [slug], onDelete: Restrict)
+  condition          Condition
+  status             ItemStatus @default(AVAILABLE)
+  community          String
+  city               String
+  latitude           Float?
+  longitude          Float?
+  pickupInstructions String     @default("")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  archivedAt         DateTime?
+
+  images        ItemImage[]
+  favorites     Favorite[]
+  requests      BorrowRequest[]
+  reports       Report[]
+  conversations Conversation[]
+
+  @@index([status, createdAt])
+  @@index([ownerId])
+  @@index([categorySlug, status])
+  @@index([community])
+  @@index([city])
+  @@index([latitude, longitude])
+}
+
+model ItemImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  itemId     String   @db.Uuid
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url        String
+  /// Provider key (Cloudinary public_id or local filename) used for deletion.
+  storageKey String
+  altText    String   @default("")
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([itemId, sortOrder])
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId    String   @db.Uuid
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+  @@index([itemId])
+}
+
+model BorrowRequest {
+  id                 String        @id @default(uuid()) @db.Uuid
+  itemId             String        @db.Uuid
+  item               Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  borrowerId         String        @db.Uuid
+  borrower           User          @relation("BorrowerRequests", fields: [borrowerId], references: [id], onDelete: Restrict)
+  ownerId            String        @db.Uuid
+  owner              User          @relation("OwnerRequests", fields: [ownerId], references: [id], onDelete: Restrict)
+  startDate          DateTime      @db.Date
+  endDate            DateTime      @db.Date
+  status             RequestStatus @default(PENDING)
+  message            String?
+  decisionAt         DateTime?
+  cancellationReason String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  transaction Transaction?
+
+  @@index([itemId, status])
+  @@index([borrowerId, status])
+  @@index([ownerId, status])
+}
+
+model Transaction {
+  id                  String            @id @default(uuid()) @db.Uuid
+  requestId           String            @unique @db.Uuid
+  request             BorrowRequest     @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  status              TransactionStatus @default(AWAITING_HANDOVER)
+  handoverConfirmedAt DateTime?
+  returnRequestedAt   DateTime?
+  returnConfirmedAt   DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  reviews Review[]
+
+  @@index([status])
+}
+
+model Conversation {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// Canonical key: sorted participant ids + item id (or "direct"). Guarantees one conversation per context.
+  key        String   @unique
+  userAId    String   @db.Uuid
+  userA      User     @relation("ConversationA", fields: [userAId], references: [id], onDelete: Restrict)
+  userBId    String   @db.Uuid
+  userB      User     @relation("ConversationB", fields: [userBId], references: [id], onDelete: Restrict)
+  itemId     String?  @db.Uuid
+  item       Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  requestId  String?  @db.Uuid
+  /// Per-participant read cursors (replace a separate MessageRead table; unread = messages from the other user after this time).
+  aLastReadAt DateTime @default(now())
+  bLastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+
+  messages Message[]
+
+  @@index([userAId, updatedAt])
+  @@index([userBId, updatedAt])
+}
+
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String       @db.Uuid
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  body           String
+  /// Optional client-generated id to make retried sends idempotent.
+  clientId       String?
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, senderId, clientId])
+  @@index([conversationId, createdAt])
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  recipientId String           @db.Uuid
+  recipient   User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  body        String
+  entityType  String?
+  entityId    String?
+  /// Prevents duplicates from retried mutations.
+  dedupeKey   String?          @unique
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId, readAt, createdAt])
+}
+
+model NotificationPreference {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestUpdates Boolean  @default(true)
+  messages       Boolean  @default(true)
+  reviews        Boolean  @default(true)
+  emailEnabled   Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+}
+
+model Review {
+  id             String      @id @default(uuid()) @db.Uuid
+  transactionId  String      @db.Uuid
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  reviewerId     String      @db.Uuid
+  reviewer       User        @relation("ReviewWriter", fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewedUserId String      @db.Uuid
+  reviewedUser   User        @relation("ReviewSubject", fields: [reviewedUserId], references: [id], onDelete: Restrict)
+  rating         Int
+  comment        String?
+  createdAt      DateTime    @default(now())
+
+  @@unique([transactionId, reviewerId])
+  @@index([reviewedUserId, createdAt])
+}
+
+model Report {
+  id             String       @id @default(uuid()) @db.Uuid
+  reporterId     String       @db.Uuid
+  reporter       User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUserId String?      @db.Uuid
+  reportedUser   User?        @relation("ReportSubject", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  itemId         String?      @db.Uuid
+  item           Item?        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reason         ReportReason
+  details        String?
+  status         ReportStatus @default(OPEN)
+  createdAt      DateTime     @default(now())
+  reviewedAt     DateTime?
+
+  actions ModerationAction[]
+
+  @@index([status, createdAt])
+  @@index([reporterId, itemId, status])
+  @@index([reporterId, reportedUserId, status])
+}
+
+model ModerationAction {
+  id        String   @id @default(uuid()) @db.Uuid
+  adminId   String   @db.Uuid
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  reportId  String?  @db.Uuid
+  report    Report?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  action    String
+  targetType String
+  targetId  String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+}
