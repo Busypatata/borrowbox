@@ -78,7 +78,7 @@ Argon2id passwords; opaque HTTP-only `Secure` session cookies stored hashed; per
 - Dates are calendar days in UTC; users far from UTC may see "today" shift by a day near midnight.
 
 ## Troubleshooting
-- **`prisma generate` fails downloading binaries** (restricted network): `PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npx prisma generate -w server`. The client uses the Rust-free `engineType = "client"` + `@prisma/adapter-pg`, so no query-engine binary is needed at runtime.
+- **`prisma generate` fails downloading binaries** (restricted/offline network, 403 from binaries.prisma.sh): the app uses the Rust-free `engineType = "client"` + `@prisma/adapter-pg`, so no engine binary is needed at runtime. Skip the download with `PRISMA_QUERY_ENGINE_LIBRARY=/bin/true PRISMA_SCHEMA_ENGINE_BINARY=/bin/true PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npm run db:generate`. (`prisma migrate` still needs the schema engine, so run migrations on a machine with normal internet access.)
 - **Tests refuse to run**: `TEST_DATABASE_URL` must point at a database whose name contains `test`.
 - **Login works but requests fail with 403 CSRF**: `CLIENT_URL` must exactly equal the browser origin (scheme + host + port).
 - **Cookies not sent in production**: use the Vercel rewrite (above) or `COOKIE_SAMESITE=none` over HTTPS.
