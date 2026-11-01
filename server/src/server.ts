@@ -2,6 +2,10 @@ import { createApp } from './app';
 import { prisma } from './config/prisma';
 import { env } from './config/env';
 import { logger } from './utils/logger';
+import { ensureCategories } from './maintenance/referenceData';
+
+// Categories are reference data: make sure they exist so a fresh database works without any seeding.
+await ensureCategories(prisma);
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {

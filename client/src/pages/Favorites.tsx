@@ -18,7 +18,7 @@ export default function Favorites() {
     <div>
       <PageHeader title="Wish List" subtitle="Items you've saved for later." />
       {q.isLoading ? <ItemGridSkeleton count={4} /> : q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : items.length === 0 ? (
-        <EmptyState icon={<Heart className="h-6 w-6" aria-hidden />} title="Nothing saved yet" body="Tap the heart on any item to save it here." action={<LinkButton to="/browse">Browse items</LinkButton>} />
+        <EmptyState icon={<Heart className="h-6 w-6" aria-hidden />} title="Your wish list is empty." body="Tap the heart on any item to save it here." action={<LinkButton to="/browse">Browse items</LinkButton>} />
       ) : <ItemGrid items={items} />}
       <Pagination page={page} totalPages={q.data?.meta.totalPages ?? 1} onChange={setPage} />
     </div>

@@ -24,7 +24,7 @@ export default function Requests({ side }: { side: 'incoming' | 'outgoing' }) {
       <PageHeader title={incoming ? 'Incoming Requests' : 'My Requests'} subtitle={incoming ? 'People who want to borrow your items.' : 'Items you have asked to borrow.'} />
       <Tabs label="Request status" value={tab} onChange={(t) => { setTab(t); setPage(1); }} tabs={[{ id: 'pending', label: 'Awaiting decision' }, { id: 'approved', label: 'Approved' }, { id: 'history', label: 'History' }]} />
       {q.isLoading ? <div className="space-y-3">{[0, 1].map((i) => <Skeleton key={i} className="h-52" />)}</div> : q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : rows.length === 0 ? (
-        <EmptyState title={tab === 'pending' ? 'Nothing waiting' : tab === 'approved' ? 'No approved requests' : 'No history yet'} body={incoming ? 'When someone asks to borrow one of your items, it will show up here.' : 'Find something you need and send your first request.'} action={!incoming ? <LinkButton to="/browse">Browse items</LinkButton> : undefined} />
+        <EmptyState title={tab === 'pending' ? (incoming ? 'No incoming requests yet.' : "You haven't made any borrowing requests yet.") : tab === 'approved' ? 'No approved requests yet.' : 'No request history yet.'} body={incoming ? 'When someone asks to borrow one of your items, it will show up here.' : 'Find something you need and send your first request.'} action={!incoming ? <LinkButton to="/browse">Browse items</LinkButton> : undefined} />
       ) : <ul className="space-y-4">{rows.map((r) => <li key={r.id}><RequestCard request={r} side={side} /></li>)}</ul>}
       <Pagination page={page} totalPages={q.data?.meta.totalPages ?? 1} onChange={setPage} />
     </div>

@@ -49,7 +49,7 @@ export default function MyItems() {
         </select>
       </div>
       {list.isLoading ? <div className="space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28" />)}</div> : list.isError ? <ErrorState error={list.error} onRetry={() => void list.refetch()} /> : items.length === 0 ? (
-        <EmptyState title={search || status ? 'No matching items' : "You haven't listed anything yet"} body={search || status ? 'Try a different search or filter.' : 'Lend a drill, a textbook, a tent — someone nearby will thank you.'} action={!search && !status ? <LinkButton to="/items/new">Create your first listing</LinkButton> : undefined} />
+        <EmptyState title={search || status ? 'No matching items' : "You haven't listed any items yet."} body={search || status ? 'Try a different search or filter.' : 'Lend a drill, a textbook, a tent — someone nearby will thank you.'} action={!search && !status ? <LinkButton to="/items/new">Create your first listing</LinkButton> : undefined} />
       ) : (
         <ul className="space-y-3">
           {items.map((i) => (

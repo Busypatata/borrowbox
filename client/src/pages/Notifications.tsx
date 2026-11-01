@@ -27,7 +27,7 @@ export default function Notifications() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Notifications" subtitle={unread ? `${unread} unread` : 'You are all caught up'} actions={<Button variant="outline" size="sm" disabled={unread === 0} loading={readAll.isPending} icon={<CheckCheck className="h-4 w-4" aria-hidden />} onClick={() => readAll.mutate()}>Mark all as read</Button>} />
-      {q.isLoading ? <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div> : q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : rows.length === 0 ? <EmptyState icon={<Bell className="h-6 w-6" aria-hidden />} title="No notifications yet" body="Updates about your requests, messages and reviews will show up here." /> : (
+      {q.isLoading ? <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div> : q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : rows.length === 0 ? <EmptyState icon={<Bell className="h-6 w-6" aria-hidden />} title="You're all caught up!" body="Updates about your requests, messages and reviews will show up here." /> : (
         <ul className="card divide-y divide-blush/60 overflow-hidden">
           {rows.map((n) => (
             <li key={n.id}>

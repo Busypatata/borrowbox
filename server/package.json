@@ -15,9 +15,12 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "tsx tests/setup/prepare-db.ts && vitest run tests/integration --no-file-parallelism"
+    "test:integration": "tsx tests/setup/prepare-db.ts && vitest run tests/integration --no-file-parallelism",
+    "db:cleanup-demo": "tsx prisma/cleanup-demo-data.ts"
   },
-  "prisma": { "seed": "tsx prisma/seed.ts" },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@borrowbox/shared": "*",
     "@prisma/adapter-pg": "6.19.3",

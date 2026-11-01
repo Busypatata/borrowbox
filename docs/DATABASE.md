@@ -23,12 +23,15 @@ Session cookies, verification tokens and reset tokens are stored only as hashes.
 ## Indexes
 Listing search: `(status, createdAt)`, `(categorySlug, status)`, `community`, `city`, `(latitude, longitude)`; requests by `(itemId,status)`, `(borrowerId,status)`, `(ownerId,status)`; notifications `(recipientId, readAt, createdAt)`; messages `(conversationId, createdAt)`.
 
-## Migrations & seed
+## Migrations, seed & cleanup
 ```bash
-npm run db:deploy        # apply committed migrations (production / CI)
-npm run db:migrate       # create+apply a new migration in development
-npm run db:seed          # idempotent demo data (refuses to run when NODE_ENV=production)
+npm run db:deploy             # apply committed migrations (production / CI)
+npm run db:migrate            # create+apply a new migration in development
+npm run db:seed               # reference data ONLY (listing categories); idempotent; safe in any environment
+npm run db:cleanup-demo       # dry-run removal of records created by the old demo seed (add -- --apply to execute)
 ```
-Seeded dev accounts (`*@borrowbox.test`): `aditi`, `sarah`, `rahul`, `priya` — password `Password123!`; `admin@` uses `SEED_ADMIN_PASSWORD`.
+The seed contains no demo members, listings, requests, messages, notifications or reviews, and the API also ensures the categories exist on startup, so a fresh database works with no seeding at all. `prisma migrate dev` may run the seed automatically; that is harmless.
+
+Optional first admin: `ADMIN_EMAIL=… ADMIN_PASSWORD=… npm run db:seed` (≥ 12 chars), or `UPDATE "User" SET role='ADMIN' WHERE email='…';`.
 
 > **Verification note:** in the sandbox where this project was built the Prisma schema-engine download was blocked, so `prisma migrate deploy/dev` itself was **not** executed there. The two SQL migration files were applied with `psql`/`pg` and every constraint was verified. Run `npm run db:deploy` once on your machine to confirm Prisma accepts the migration history.

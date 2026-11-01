@@ -27,9 +27,9 @@ export default function Loans({ role }: { role: 'BORROWER' | 'OWNER' }) {
 
   const q = tab === 'closed' ? closed : tx;
   const empty = {
-    upcoming: lending ? 'No upcoming handovers' : 'No upcoming borrowings',
-    current: lending ? 'Nothing is lent out right now' : "You aren't borrowing anything right now",
-    completed: 'No completed loans yet',
+    upcoming: lending ? "You haven't lent out any items yet." : 'No upcoming borrowings yet.',
+    current: lending ? "You haven't lent out any items yet." : "You aren't borrowing anything right now.",
+    completed: 'No completed loans yet.',
     closed: 'No declined or cancelled requests',
   }[tab];
 

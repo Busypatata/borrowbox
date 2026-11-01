@@ -22,7 +22,7 @@ export default function Messages() {
         <h1 className="border-b border-blush/70 px-4 py-4 font-display text-xl">Conversations</h1>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.isLoading ? <div className="space-y-2 p-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div> : list.isError ? <div className="p-3"><ErrorState error={list.error} onRetry={() => void list.refetch()} /></div> : rows.length === 0 ? (
-            <div className="p-4"><EmptyState icon={<MessageSquare className="h-6 w-6" aria-hidden />} title="No conversations yet" body="Message an owner from any item page to start one." action={<LinkButton to="/browse" size="sm">Browse items</LinkButton>} className="border-0 shadow-none" /></div>
+            <div className="p-4"><EmptyState icon={<MessageSquare className="h-6 w-6" aria-hidden />} title="No conversations yet." body="Message an owner from any item page to start one." action={<LinkButton to="/browse" size="sm">Browse items</LinkButton>} className="border-0 shadow-none" /></div>
           ) : (
             <ul>
               {rows.map((c) => (

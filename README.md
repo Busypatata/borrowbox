@@ -24,10 +24,26 @@ cp .env.example .env             # then edit secrets (see below)
 npm run db:up                    # start Postgres in Docker
 npm run db:generate              # generate Prisma client
 npm run db:deploy                # apply migrations
-npm run db:seed                  # optional demo data
+npm run db:seed                  # reference data only (categories) — adds NO demo content
 npm run dev                      # API :4000 + web :5173
 ```
-Open http://localhost:5173. Seeded logins (`npm run db:seed`): `aditi@borrowbox.test`, `sarah@borrowbox.test`, `rahul@borrowbox.test`, `priya@borrowbox.test` — password `Password123!`. Admin: `admin@borrowbox.test` with `SEED_ADMIN_PASSWORD` from `.env`.
+Open http://localhost:5173 and **sign up** — the app starts completely empty: no sample members, listings, requests, messages or notifications. Everything you see is created by real accounts. To try the full flow yourself, sign up two accounts (one normal window, one private window).
+
+Because email is not configured locally, the verification link is **printed in the terminal** running `npm run dev`; copy it into the browser.
+
+**First administrator (optional, for the Moderation page):**
+```bash
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='a-long-strong-password' npm run db:seed
+```
+(or promote an account you already signed up with: `UPDATE "User" SET role='ADMIN' WHERE email='you@example.com';`)
+
+### Already ran an earlier version and see sample data?
+Older builds shipped a demo seed (Priya Sharma, Sarah Khan, "Canon EOS 200D", …). Remove exactly those records, and nothing else, with:
+```bash
+npm run db:cleanup-demo                 # dry run: lists what would be removed
+npm run db:cleanup-demo -- --apply      # removes it (one transaction)
+```
+It only matches the old seed's fixed IDs + `@borrowbox.test` emails, so real accounts cannot match. It stops and tells you if a real member's request/conversation/review points at demo records (`--include-real-dependents` to override), and keeps the old `admin@borrowbox.test` account unless you add `--remove-admin` (change that account's password or remove it — its old default password was public).
 
 Generate real secrets: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` (use different values for `SESSION_SECRET` and `CSRF_SECRET`).
 
