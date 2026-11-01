@@ -44,8 +44,9 @@ test.describe('A brand-new account sees only real (empty) data', () => {
     await expect(page.locator('body')).not.toContainText(DEMO_NAMES);
 
     // Public pages on an empty marketplace.
-    await page.goto('/browse');
-    await expect(page.getByText(/Nothing has been shared yet|No items match/i).first()).toBeVisible();
+    // (other specs share this database, so search for something that cannot exist rather than assuming it is empty)
+    await page.goto('/browse?q=zz-no-such-item-xyzzy');
+    await expect(page.getByText(/No items match your search/i).first()).toBeVisible();
     await expect(page.locator('body')).not.toContainText(DEMO_NAMES);
 
     expect(problems, problems.join('\n')).toEqual([]);
