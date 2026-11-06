@@ -16,8 +16,6 @@ borrowbox/
 
 ## Quick start
 
-Prerequisites: Node ≥ 20, npm ≥ 10, Docker (or any PostgreSQL 14+).
-
 ```bash
 npm install                      # installs all workspaces
 cp .env.example .env             # then edit secrets (see below)
